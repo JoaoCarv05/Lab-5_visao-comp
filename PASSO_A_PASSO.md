@@ -27,6 +27,16 @@ Abra os 4 scripts e confira o cabeçalho de cada um. Os valores a checar são os
 
 ---
 
+## 0.1 Descobrir os IDs das webcams (recomendado)
+
+```bash
+python3 list_cameras.py
+```
+Ele testa os índices 0..5 e diz quais funcionam, sugerindo valores para
+`CamL_id`/`CamR_id`. Ajuste esses valores no topo dos scripts.
+
+---
+
 ## 1. Descobrir qual webcam é a esquerda e qual é a direita
 
 ```bash
@@ -148,3 +158,29 @@ Isso atualiza o PR #1 automaticamente.
 > **Sobre apagar os arquivos no laboratório:** o enunciado pede para apagar do
 > **computador do laboratório** os arquivos baixados do exemplo. Isso **não**
 > afeta o seu repositório — depois do `git push`, tudo fica salvo no GitHub.
+
+---
+
+## Solução de problemas — webcams no Windows
+
+Se aparecer algo como:
+
+```
+CvCapture_MSMF::grabFrame videoio(MSMF): can't grab frame. Error: -2147483638
+```
+
+isso é o backend padrão do OpenCV no Windows (MSMF) falhando ao capturar. As
+causas mais comuns e as correções (já aplicadas nos scripts):
+
+1. **Backend MSMF instável** → os scripts agora abrem a câmera com
+   `cv2.VideoCapture(id, cv2.CAP_DSHOW)` (DirectShow) automaticamente no Windows.
+2. **ID de câmera errado** → o padrão foi mudado para `CamL_id = 0`, `CamR_id = 1`
+   (o valor antigo `2` normalmente não existe). Rode `python3 list_cameras.py`
+   para confirmar os IDs válidos.
+3. **Banda USB insuficiente** (duas webcams no mesmo controlador USB) → os scripts
+   agora pedem formato MJPG e resolução 640x480 para reduzir a banda. Se ainda
+   falhar, ligue cada webcam em uma **porta USB de controladores diferentes**
+   (evite hubs; em desktop, use portas da frente e de trás).
+4. **Câmera em uso por outro app** → feche Teams/Zoom/Câmera do Windows/OBS etc.
+5. **Permissão de câmera** → Windows: *Configurações → Privacidade → Câmera* →
+   permitir apps de desktop acessarem a câmera.
