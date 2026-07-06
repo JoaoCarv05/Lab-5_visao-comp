@@ -16,16 +16,34 @@ O programa salva pares sincronizados de imagens (esquerda e direita) somente
 quando o tabuleiro é detectado simultaneamente nas duas câmeras. As imagens são
 gravadas em data/stereoL/ e data/stereoR/. Obtenha entre 10 e 15 pares.
 """
+import sys
 import time
 
 import cv2
+
+# No Windows, o backend padrão (MSMF) costuma falhar ao capturar frames
+# ("can't grab frame"). O DirectShow (CAP_DSHOW) é bem mais estável com webcams
+# USB. Em Linux/Mac usamos o backend padrão.
+CAP_BACKEND = cv2.CAP_DSHOW if sys.platform.startswith("win") else cv2.CAP_ANY
+
+
+def abrir_camera(cam_id):
+    """Abre uma webcam usando o backend adequado ao sistema operacional."""
+    cap = cv2.VideoCapture(cam_id, CAP_BACKEND)
+    # Reduz a largura de banda USB (ajuda quando as duas webcams estão no mesmo
+    # controlador USB) usando MJPG e uma resolução moderada.
+    cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*"MJPG"))
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+    return cap
 
 # =====================================================================
 # PARÂMETROS QUE DEVEM SER AJUSTADOS PARA A NOSSA CÂMERA ESTÉREO
 # =====================================================================
 # IDs das webcams USB do laboratório (podem variar de máquina para máquina).
+# Use list_cameras.py para descobrir quais IDs existem na sua máquina.
 CamL_id = 0          # webcam da esquerda
-CamR_id = 2          # webcam da direita
+CamR_id = 1          # webcam da direita
 
 # Dimensões INTERNAS do tabuleiro de xadrez (cantos internos): (colunas, linhas)
 CHESSBOARD = (9, 6)
@@ -49,8 +67,16 @@ def main():
     input()
 
     camL_id, camR_id = CamL_id, CamR_id
-    CamL = cv2.VideoCapture(camL_id)
-    CamR = cv2.VideoCapture(camR_id)
+    CamL = abrir_camera(camL_id)
+    CamR = abrir_camera(camR_id)
+
+    if not CamL.isOpened() or not CamR.isOpened():
+        print(f"Erro: não foi possível abrir as webcams (IDs {camL_id} e {camR_id}).")
+        print("Rode 'python3 list_cameras.py' para descobrir os IDs corretos e")
+        print("ajuste CamL_id / CamR_id no topo deste arquivo.")
+        CamL.release()
+        CamR.release()
+        return
 
     # Estabiliza a exposição das câmeras descartando os primeiros frames.
     for _ in range(30):
@@ -62,6 +88,8 @@ def main():
     if retL and retR:
         cv2.imshow('imgL', frameL)
         cv2.imshow('imgR', frameR)
+    else:
+        print("Aviso: não foi possível ler frames das duas câmeras.")
 
     key = cv2.waitKey(0) & 0xFF
     if key in (ord('n'), ord('N')):
@@ -73,8 +101,8 @@ def main():
     CamR.release()
     CamL.release()
 
-    CamL = cv2.VideoCapture(camL_id)
-    CamR = cv2.VideoCapture(camR_id)
+    CamL = abrir_camera(camL_id)
+    CamR = abrir_camera(camR_id)
 
     start = time.time()
     count = 0

@@ -17,15 +17,28 @@ Uso:
 Controles:
     ESC — encerrar antes do tempo
 """
+import sys
 import time
 
 import cv2
+
+# No Windows o backend MSMF costuma falhar ("can't grab frame"); DirectShow
+# (CAP_DSHOW) é mais estável com webcams USB.
+CAP_BACKEND = cv2.CAP_DSHOW if sys.platform.startswith("win") else cv2.CAP_ANY
+
+
+def abrir_camera(cam_id):
+    cap = cv2.VideoCapture(cam_id, CAP_BACKEND)
+    cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*"MJPG"))
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+    return cap
 
 # =====================================================================
 # PARÂMETROS QUE DEVEM SER AJUSTADOS PARA A NOSSA CÂMERA ESTÉREO
 # =====================================================================
 CamL_id = 0          # webcam da esquerda
-CamR_id = 2          # webcam da direita
+CamR_id = 1          # webcam da direita
 
 NOME_EQUIPE = "joao"
 PARAMS_FILE = f"data/params_{NOME_EQUIPE}.xml"
@@ -40,8 +53,13 @@ OUTPUT_FILE = f"videos/video3d_{NOME_EQUIPE}.avi"
 
 
 def main():
-    CamL = cv2.VideoCapture(CamL_id)
-    CamR = cv2.VideoCapture(CamR_id)
+    CamL = abrir_camera(CamL_id)
+    CamR = abrir_camera(CamR_id)
+
+    if not CamL.isOpened() or not CamR.isOpened():
+        print(f"Erro: não foi possível abrir as webcams (IDs {CamL_id} e {CamR_id}).")
+        print("Rode 'python3 list_cameras.py' e ajuste CamL_id / CamR_id.")
+        return
 
     print("Lendo parâmetros de calibração ......")
     cv_file = cv2.FileStorage(PARAMS_FILE, cv2.FILE_STORAGE_READ)
