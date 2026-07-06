@@ -177,10 +177,23 @@ causas mais comuns e as correções (já aplicadas nos scripts):
 2. **ID de câmera errado** → o padrão foi mudado para `CamL_id = 0`, `CamR_id = 1`
    (o valor antigo `2` normalmente não existe). Rode `python3 list_cameras.py`
    para confirmar os IDs válidos.
-3. **Banda USB insuficiente** (duas webcams no mesmo controlador USB) → os scripts
-   agora pedem formato MJPG e resolução 640x480 para reduzir a banda. Se ainda
-   falhar, ligue cada webcam em uma **porta USB de controladores diferentes**
-   (evite hubs; em desktop, use portas da frente e de trás).
-4. **Câmera em uso por outro app** → feche Teams/Zoom/Câmera do Windows/OBS etc.
-5. **Permissão de câmera** → Windows: *Configurações → Privacidade → Câmera* →
+3. **Câmera em uso por outro app** → feche Teams/Zoom/Câmera do Windows/OBS etc.
+4. **Permissão de câmera** → Windows: *Configurações → Privacidade → Câmera* →
    permitir apps de desktop acessarem a câmera.
+
+### Câmeras abrem mas a imagem fica PRETA
+
+As webcams abrem/capturam, mas a janela mostra tela preta. A configuração de
+abertura fica em **`stereo_utils.py`**:
+
+- **Formato MJPG forçado** era a causa mais comum: em alguns drivers DirectShow,
+  forçar MJPG devolve tela preta. Por isso `USE_MJPG = False` por padrão (usa o
+  formato nativo da câmera, que é o modo que funciona no teste com uma câmera só).
+- **Frames de aquecimento**: `WARMUP_FRAMES = 15` descarta os primeiros frames
+  (que costumam vir pretos enquanto a câmera ajusta exposição).
+- Rode `python3 list_cameras.py` — ele mostra o **brilho médio** de cada câmera,
+  então dá para ver qual está preta (brilho ~0).
+- **Banda USB** (duas webcams no mesmo controlador podem não transmitir juntas):
+  ligue cada webcam em **portas USB de controladores diferentes** (evite hubs).
+  Se precisar reduzir a banda, em `stereo_utils.py` defina `USE_MJPG = True` e/ou
+  `FRAME_W = 640`, `FRAME_H = 480`.
