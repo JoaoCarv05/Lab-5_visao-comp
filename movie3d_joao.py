@@ -15,21 +15,9 @@ Uso:
 Controles:
     ESC — encerrar
 """
-import sys
-
 import cv2
 
-# No Windows o backend MSMF costuma falhar ("can't grab frame"); DirectShow
-# (CAP_DSHOW) é mais estável com webcams USB.
-CAP_BACKEND = cv2.CAP_DSHOW if sys.platform.startswith("win") else cv2.CAP_ANY
-
-
-def abrir_camera(cam_id):
-    cap = cv2.VideoCapture(cam_id, CAP_BACKEND)
-    cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*"MJPG"))
-    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
-    return cap
+from stereo_utils import abrir_camera
 
 # =====================================================================
 # PARÂMETROS QUE DEVEM SER AJUSTADOS PARA A NOSSA CÂMERA ESTÉREO

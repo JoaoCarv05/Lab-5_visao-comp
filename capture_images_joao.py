@@ -16,26 +16,11 @@ O programa salva pares sincronizados de imagens (esquerda e direita) somente
 quando o tabuleiro é detectado simultaneamente nas duas câmeras. As imagens são
 gravadas em data/stereoL/ e data/stereoR/. Obtenha entre 10 e 15 pares.
 """
-import sys
 import time
 
 import cv2
 
-# No Windows, o backend padrão (MSMF) costuma falhar ao capturar frames
-# ("can't grab frame"). O DirectShow (CAP_DSHOW) é bem mais estável com webcams
-# USB. Em Linux/Mac usamos o backend padrão.
-CAP_BACKEND = cv2.CAP_DSHOW if sys.platform.startswith("win") else cv2.CAP_ANY
-
-
-def abrir_camera(cam_id):
-    """Abre uma webcam usando o backend adequado ao sistema operacional."""
-    cap = cv2.VideoCapture(cam_id, CAP_BACKEND)
-    # Reduz a largura de banda USB (ajuda quando as duas webcams estão no mesmo
-    # controlador USB) usando MJPG e uma resolução moderada.
-    cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*"MJPG"))
-    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
-    return cap
+from stereo_utils import abrir_camera
 
 # =====================================================================
 # PARÂMETROS QUE DEVEM SER AJUSTADOS PARA A NOSSA CÂMERA ESTÉREO
